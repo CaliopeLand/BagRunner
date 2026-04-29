@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Corredor de Bolsa</title>
+<!-- VERSION 0.6 -->
+<style>
+    :root {
+        --bg: #1a1a1a;
+        --panel: #222222;
+        --panel-2: #2a2a2a;
+        --text: #e8e8e8;
+        --text-dim: #a0a0a0;
+        --accent: #4ade80;
+        --warning: #facc15;
+        --danger: #f87171;
+        --border: #3a3a3a;
+        --grid-line: rgba(255,255,255,0.08);
+        --shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+    
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+    
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+        user-select: none;
+    }
+    
+    header {
+        width: 100%;
+        max-width: 1400px;
+        margin-bottom: 24px;
+        text-align: center;
+    }
+    
+    h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        background: linear-gradient(135deg, #4ade80 0%, #22d3ee 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 8px;
+    }
+    
+    .stats-bar {
+        display: flex;
+        gap: 16px;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 16px;
+    }
+    
+    .stat {
+        background: var(--panel);
+        padding: 10px 18px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        min-width: 120px;
+    }
+    
+    .stat-label {
+        font-size: 0.75rem;
+        color: var(--text-dim);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .stat-value {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--accent);
+    }
+    
+    .total-load {
+        width: 100%;
+        max-width: 600px;
+        margin: 16px auto 0;
+    }
+    
+    .load-label {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 6px;
+        font-size: 0.875rem;
+        color: var(--text-dim);
+    }
+    
+    .progress-bar {
+        width: 100%;
+        height: 12px;
+        background: var(--panel);
+        border-radius: 999px;
+        overflow: hidden;
+        border: 1px solid var(--border);
+        position: relative;
+    }
+    
+    .progress-fill {
+        height: 100%;
+        background: var(--accent);
+        transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1), background 0.3s;
+        border-radius: 999px;
+    }
+    
+    .progress-fill.warning {
+        background: var(--warning);
+    }
+    
+    .progress-fill.danger {
+        background: var(--danger);
+    }
+    
+    main {
+        width: 100%;
+        max-width: 1400px;
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        gap: 32px;
+        align-items: start;
+    }
+    
+    .panel {
+        background: var(--panel);
+        border-radius: 20px;
+        border: 1px solid var(--border);
+        padding: 24px;
+        box-shadow: var(--shadow);
+    }
+    
+    .panel h2 {
+        font-size: 1.125rem;
+        font-weight: 600;
+        margin-bottom: 16px;
+        color: var(--text);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .products-panel {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .hint {
+        font-size: 0.8rem;
+        color: var(--text-dim);
+        text-align: center;
+        margin-bottom: 16px;
+        line-height: 1.4;
+    }
+    
+    .products-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+    
+    .product-card {
+        background: var(--panel-2);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 12px;
+        cursor: grab;
+        transition: all 0.2s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .product-card:hover:not(.disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        border-color: var(--accent);
+    }
+    
+    .product-card.dragging {
+        opacity: 0.4;
+        cursor: grabbing;
+    }
+    
+    .product-card.disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+    
+    .product-card.selected {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 2px var(--accent);
+    }
+    
+    .product-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+    }
+    
+    .product-emoji {
+        font-size: 1.5rem;
+        line-height: 1;
+    }
+    
+    .product-info {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .product-name {
+        font-size: 0.875rem;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    
+    .product-weight {
+        font-size: 0.75rem;
+        color: var(--text-dim);
+    }
+    
+    .mini-grid {
+        display: grid;
+        gap: 2px;
+        background: var(--bg);
+        padding: 6px;
+        border-radius: 6px;
+        width: fit-content;
+        margin: 0 auto;
+    }
+    
+    .mini-cell {
+        width: 12px;
+        height: 12px;
+        background: var(--border);
+        border-radius: 2px;
+    }
+    
+    .mini-cell.active {
+        background: var(--accent);
+    }
+    
+    .bags-container {
+        display: flex;
+        gap: 24px;
+        justify-content: center;
+    }
+    
+    .bag-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+    }
+    
+    .bag {
+        position: relative;
+        width: 320px;
+        height: 420px;
+        background: var(--panel-2);
+        border-radius: 16px;
+        border: 2px solid var(--border);
+        overflow: hidden;
+    }
+    
+    .bag-svg {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 10;
+    }
+    
+    .bag-grid {
+        position: absolute;
+        inset: 20px 20px 60px 20px;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        grid-template-rows: repeat(4, 1fr);
+        gap: 0;
+        border: 1px solid var(--grid-line);
+        z-index: 1;
+    }
+    
+    .grid-cell {
+        border-right: 1px solid var(--grid-line);
+        border-bottom: 1px solid var(--grid-line);
+        position: relative;
+        transition: background 0.15s;
+    }
+    
+    .grid-cell:nth-child(4n) {
+        border-right: none;
+    }
+    
+    .grid-cell:nth-child(n+13) {
+        border-bottom: none;
+    }
+    
+    .grid-cell.hover-valid {
+        background: rgba(74, 222, 128, 0.2);
+    }
+    
+    .grid-cell.hover-invalid {
+        background: rgba(248, 113, 0.3);
+    }
+    
+    .placed-product {
+        position: absolute;
+        pointer-events: auto;
+        z-index: 5;
+        cursor: context-menu;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: opacity 0.2s;
+    }
+    
+    .placed-product:hover {
+        opacity: 0.85;
+    }
+    
+    .placed-emoji {
+        font-size: 3rem;
+        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+        pointer-events: none;
+    }
+    
+    .bag-load {
+        width: 100%;
+    }
+    
+    .bag-load-bar {
+        height: 8px;
+    }
+    
+    .actions {
+        display: flex;
+        gap: 12px;
+        width: 100%;
+    }
+    
+    button {
+        flex: 1;
+        padding: 12px 20px;
+        background: var(--accent);
+        color: var(--bg);
+        border: none;
+        border-radius: 12px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-family: inherit;
+    }
+    
+    button:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(74, 222, 128, 0.4);
+    }
+    
+    button:active:not(:disabled) {
+        transform: translateY(0);
+    }
+    
+    button:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+    }
+    
+    button.secondary {
+        background: var(--panel-2);
+        color: var(--text);
+        border: 1px solid var(--border);
+    }
+    
+    button.secondary:hover:not(:disabled) {
+        background: var(--border);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    
+    .drag-preview {
+        position: fixed;
+        pointer-events: none;
+        z-index: 9999;
+        opacity: 0.9;
+        transform: translate(-50%, -50%);
+        transition: none;
+    }
+    
+    .drag-shape {
+        display: grid;
+        gap: 2px;
+        padding: 8px;
+        background: var(--panel);
+        border: 2px solid var(--accent);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+    }
+    
+    .drag-cell {
+        width: 32px;
+        height: 32px;
+        border-radius: 4px;
+    }
+    
+    .drag-cell.active {
+        background: var(--accent);
+    }
+    
+    .toast {
+        position: fixed;
+        bottom: 32px;
+        left: 50%;
+        transform: translateX(-50%) translateY(100px);
+        background: var(--panel);
+        border: 1px solid var(--accent);
+        padding: 16px 24px;
+        border-radius: 12px;
+        box-shadow: var(--shadow);
+        z-index: 10000;
+        opacity: 0;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        font-weight: 600;
+    }
+    
+    .toast.show {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+    }
+    
+    @media (max-width: 1200px) {
+        main {
+            grid-template-columns: 1fr;
+            gap: 24px;
+        }
+        
+        .bags-container {
+            order: -1;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        h1 { font-size: 2rem; }
+        .bag { width: 280px; height: 380px; }
+        .products-grid { grid-template-columns: 1fr; }
+        .bags-container { flex-direction: column; align-items: center; }
+        .stats-bar { gap: 8px; }
+        .stat { min-width: 100px; padding: 8px 12px; }
+    }
+</style>
+</head>
+<body>
+    <header>
+        <h1>Corredor de Bolsa</h1>
+        <div class="stats-bar">
+            <div class="stat">
+                <span class="stat-label">Clientes</span>
+                <span class="stat-value" id="clientsCount">0</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Puntos</span>
+                <span class="stat-value" id="pointsCount">0</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Carga Total</span>
+                <span class="stat-value" id="totalWeight">0kg</span>
+            </div>
+        </div>
+        <div class="total-load">
+            <div class="load-label">
+                <span>Carga total: <strong id="totalWeightText">0kg / 12kg</strong></span>
+                <span id="totalPercent">0%</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="totalProgress"></div>
+            </div>
+        </div>
+    </header>
+    
+    <main>
+        <div class="panel products-panel">
+            <h2>🛒 Compra del cliente</h2>
+            <p class="hint">Arrastra para embolsar · R o click derecho para rotar</p>
+            <div class="products-grid" id="productsGrid"></div>
+            <div class="actions">
+                <button id="newClientBtn" class="secondary">Nuevo cliente</button>
+                <button id="checkoutBtn" disabled>Cobrar al cliente</button>
+            </div>
+        </div>
+        
+        <div class="bags-container" id="bagsContainer"></div>
+        
+        <div class="panel">
+            <h2>⚙️ Acciones</h2>
+            <div class="actions">
+                <button id="resetBtn" class="secondary">Reiniciar bolsas</button>
+            </div>
+            <div style="margin-top: 20px; font-size: 0.85rem; color: var(--text-dim); line-height: 1.6;">
+                <p><strong>Objetivo:</strong> Coloca todos los productos en las bolsas sin superar el peso máximo.</p>
+                <p style="margin-top: 8px;"><strong>Controles:</strong><br>
+                • Arrastra productos a las bolsas<br>
+                • Tecla R: rotar producto seleccionado<br>
+                • Click derecho en producto: rotar<br>
+                • Click derecho en bolsa: quitar producto<br>
+                • Botón "Cobrar": cuando uses ≥80% capacidad</p>
+            </div>
+        </div>
+    </main>
+    
+    <div class="toast" id="toast"></div>
+    
+<script>
+console.log('Corredor de Bolsa v0.6');
+
+// Game config
+const CONFIG = {
+    BAG_COUNT: 2,
+    BAG_WEIGHT_MAX: 6,
+    BAG_GRID_SIZE: 4,
+    PRODUCTS_PER_CUSTOMER: 8
+};
+
+// Product definitions with shapes
+const PRODUCT_TYPES = [
+    { id: 'leche', name: 'leche', emoji: '🥛', weight: 1, shape: [[1, 1]] },
+    { id: 'sandia', name: 'sandía', emoji: '🍉', weight: 3, shape: [[1, 1], [1, 1]] },
+    { id: 'huevos', name: 'huevos', emoji: '🥚', weight: 1, shape: [[1, 1], [1, 1]] },
+    { id: 'pan', name: 'pan', emoji: '🍞', weight: 1, shape: [[1, 1, 1]] },
+    { id: 'manzana', name: 'manzana', emoji: '🍎', weight: 1, shape: [[1]] },
+    { id: 'zumo', name: 'zumo', emoji: '🧃', weight: 2, shape: [[1], [1]] },
+    { id: 'queso', name: 'queso', emoji: '🧀', weight: 2, shape: [[1, 1]] },
+    { id: 'pollo', name: 'pollo', emoji: '🍗', weight: 3, shape: [[1, 0], [1, 1]] } // L-shape
+];
+
+const PRODUCT_COLORS = [
+    'rgba(74, 222, 128, 0.4)',
+    'rgba(34, 211, 238, 0.4)',
+    'rgba(251, 191, 36, 0.4)',
+    'rgba(248, 113, 113, 0.4)',
+    'rgba(167, 139, 250, 0.4)',
+    'rgba(244, 114, 182, 0.4)',
+    'rgba(96, 165, 250, 0.4)',
+    'rgba(251, 146, 60, 0.4)'
+];
+
+// Game state
+let state = {
+    clientsServed: 0,
+    points: 0,
+    products: [],
+    bags: [],
+    selectedProduct: null,
+    draggingProduct: null,
+    dragPreview: null,
+    totalCapacity: CONFIG.BAG_COUNT * CONFIG.BAG_WEIGHT_MAX
+};
+
+// Initialize game
+function init() {
+    createBags();
+    newCustomer();
+    setupEventListeners();
+    updateUI();
+}
+
+function createBags() {
+    state.bags = [];
+    const container = document.getElementById('bagsContainer');
+    container.innerHTML = '';
+    
+    for (let i = 0; i < CONFIG.BAG_COUNT; i++) {
+        const bag = {
+            id: i,
+            weight: 0,
+            grid: Array(CONFIG.BAG_GRID_SIZE).fill(null).map(() => 
+                Array(CONFIG.BAG_GRID_SIZE).fill(null)
+            ),
+            products: []
+        };
+        state.bags.push(bag);
+        
+        const bagEl = createBagElement(bag);
+        container.appendChild(bagEl);
+    }
+}
+
+function createBagElement(bag) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'bag-wrapper';
+    wrapper.dataset.bagId = bag.id;
+    
+    const bagDiv = document.createElement('div');
+    bagDiv.className = 'bag';
+    
+    // SVG outline with handles for x-ray design
+    bagDiv.innerHTML = `
+        <svg class="bag-svg" viewBox="0 0 320 420" preserveAspectRatio="none">
+            <defs>
+                <linearGradient id="bagGradient${bag.id}" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#2a2a2a;stop-opacity:0.3" />
+                    <stop offset="100%" style="stop-color:#1a1a1a;stop-opacity:0.5" />
+                </linearGradient>
+            </defs>
+            <!-- Handles -->
+            <path d="M 120 20 Q 100 0 80 20 L 80 40 L 120 40 Z" fill="none" stroke="#3a3a3a" stroke-width="3" />
+            <path d="M 200 20 Q 220 0 240 20 L 240 40 L 200 40 Z" fill="none" stroke="#3a3a3a" stroke-width="3" />
+            <!-- Bag outline -->
+            <rect x="10" y="40" width="300" height="370" rx="20" fill="url(#bagGradient${bag.id})" stroke="#3a3a3a" stroke-width="2"/>
+        </svg>
+    `;
+    
+    const grid = document.createElement('div');
+    grid.className = 'bag-grid';
+    grid.dataset.bagId = bag.id;
+    
+    for (let y = 0; y < CONFIG.BAG_GRID_SIZE; y++) {
+        for (let x = 0; x < CONFIG.BAG_GRID_SIZE; x++) {
+            const cell = document.createElement('div');
+            cell.className = 'grid-cell';
+            cell.dataset.x = x;
+            cell.dataset.y = y;
+            cell.dataset.bagId = bag.id;
+            grid.appendChild(cell);
+        }
+    }
+    
+    bagDiv.appendChild(grid);
+    wrapper.appendChild(bagDiv);
+    
+    const loadDiv = document.createElement('div');
+    loadDiv.className = 'bag-load';
+    loadDiv.innerHTML = `
+        <div class="load-label">
+            <span>Bolsa ${bag.id + 1}: <strong id="bagWeight${bag.id}">0kg / ${CONFIG.BAG_WEIGHT_MAX}kg</strong></span>
+            <span id="bagPercent${bag.id}">0%</span>
+        </div>
+        <div class="progress-bar bag-load-bar">
+            <div class="progress-fill" id="bagProgress${bag.id}"></div>
+        </div>
+    `;
+    wrapper.appendChild(loadDiv);
+    
+    return wrapper;
+}
+
+function newCustomer() {
+    state.products = [];
+    state.selectedProduct = null;
+    
+    // Generate 8 products for customer
+    for (let i = 0; i < CONFIG.PRODUCTS_PER_CUSTOMER; i++) {
+        const typeIndex = Math.floor(Math.random() * PRODUCT_TYPES.length);
+        const type = PRODUCT_TYPES[typeIndex];
+        state.products.push({
+            instanceId: `${type.id}_${Date.now()}_${i}`,
+            type: type,
+            rotation: 0,
+            used: false,
+            color: PRODUCT_COLORS[i % PRODUCT_COLORS.length]
+        });
+    }
+    
+    renderProducts();
+    updateUI();
+}
+
+function renderProducts() {
+    const grid = document.getElementById('productsGrid');
+    grid.innerHTML = '';
+    
+    state.products.forEach((product, idx) => {
+        const card = document.createElement('div');
+        card.className = 'product-card';
+        card.dataset.idx = idx;
+        if (product.used) card.classList.add('disabled');
+        if (state.selectedProduct === idx) card.classList.add('selected');
+        
+        const rotatedShape = getRotatedShape(product.type.shape, product.rotation);
+        const miniGrid = renderMiniGrid(rotatedShape);
+        
+        card.innerHTML = `
+            <div class="product-header">
+                <span class="product-emoji">${product.type.emoji}</span>
+                <div class="product-info">
+                    <div class="product-name">${product.type.name}</div>
+                    <div class="product-weight">${product.type.weight}kg</div>
+                </div>
+            ${miniGrid}
+        `;
+        
+        if (!product.used) {
+            card.draggable = true;
+            card.addEventListener('dragstart', (e) => handleDragStart(e, idx));
+            card.addEventListener('dragend', handleDragEnd);
+            card.addEventListener('click', () => selectProduct(idx));
+            card.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                rotateProduct(idx);
+            });
+        }
+        
+        grid.appendChild(card);
+    });
+}
+
+function renderMiniGrid(shape) {
+    const rows = shape.length;
+    const cols = shape[0].length;
+    let html = `<div class="mini-grid" style="grid-template-columns: repeat(${cols}, 1fr);">`;
+    
+    for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+            html += `<div class="mini-cell ${shape[y][x] ? 'active' : ''}"></div>`;
+        }
+    }
+    html += '</div>';
+    return html;
+}
+
+function selectProduct(idx) {
+    state.selectedProduct = idx;
+    renderProducts();
+}
+
+function rotateProduct(idx) {
+    if (state.products[idx] && !state.products[idx].used) {
+        state.products[idx].rotation = (state.products[idx].rotation + 1) % 4;
+        renderProducts();
+        
+        // Update drag preview if dragging
+        if (state.draggingProduct === idx && state.dragPreview) {
+            updateDragPreview(state.products[idx]);
+        }
+    }
+}
+
+function getRotatedShape(shape, rotation) {
+    let result = shape;
+    for (let i = 0; i < rotation; i++) {
+        const rows = result.length;
+        const cols = result[0].length;
+        const rotated = Array(cols).fill(null).map(() => Array(rows).fill(0));
+        for (let y = 0; y < rows; y++) {
+            for (let x = 0; x < cols; x++) {
+                rotated[x][rows - 1 - y] = result[y][x];
+            }
+        }
+        result = rotated;
+    }
+    return result;
+}
+
+function handleDragStart(e, idx) {
+    state.draggingProduct = idx;
+    state.selectedProduct = idx;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', idx);
+    
+    const card = e.target.closest('.product-card');
+    card.classList.add('dragging');
+    
+    createDragPreview(state.products[idx]);
+}
+
+function handleDragEnd(e) {
+    const card = e.target.closest('.product-card');
+    if (card) card.classList.remove('dragging');
+    
+    if (state.dragPreview) {
+        state.dragPreview.remove();
+        state.dragPreview = null;
+    }
+    state.draggingProduct = null;
+    clearHoverStates();
+}
+
+function createDragPreview(product) {
+    const preview = document.createElement('div');
+    preview.className = 'drag-preview';
+    updateDragPreviewContent(preview, product);
+    document.body.appendChild(preview);
+    state.dragPreview = preview;
+    
+    document.addEventListener('dragover', updateDragPreviewPosition);
+}
+
+function updateDragPreview(product) {
+    if (state.dragPreview) {
+        updateDragPreviewContent(state.dragPreview, product);
+    }
+}
+
+function updateDragPreviewContent(preview, product) {
+    const shape = getRotatedShape(product.type.shape, product.rotation);
+    const rows = shape.length;
+    const cols = shape[0].length;
+    
+    preview.innerHTML = `<div class="drag-shape" style="grid-template-columns: repeat(${cols}, 32px); background: ${product.color};">
+        ${shape.flat().map(cell => `<div class="drag-cell ${cell ? 'active' : ''}"></div>`).join('')}
+    </div>`;
+}
+
+function updateDragPreviewPosition(e) {
+    if (state.dragPreview) {
+        state.dragPreview.style.left = e.clientX + 'px';
+        state.dragPreview.style.top = e.clientY + 'px';
+    }
+}
+
+function setupEventListeners() {
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'r' || e.key === 'R') {
+            if (state.draggingProduct !== null) {
+                rotateProduct(state.draggingProduct);
+            } else if (state.selectedProduct !== null) {
+                rotateProduct(state.selectedProduct);
+            }
+        }
+    });
+    
+    document.querySelectorAll('.grid-cell').forEach(cell => {
+        cell.addEventListener('dragover', handleDragOver);
+        cell.addEventListener('dragleave', handleDragLeave);
+        cell.addEventListener('drop', handleDrop);
+    });
+    
+    document.querySelectorAll('.bag-grid').forEach(grid => {
+        grid.addEventListener('contextmenu', handleBagRightClick);
+    });
+    
+    document.getElementById('newClientBtn').addEventListener('click', () => {
+        if (state.bags.some(b => b.products.length > 0)) {
+            if (!confirm('¿Reiniciar bolsas y generar nuevo cliente?')) return;
+        }
+        resetBags();
+        newCustomer();
+    });
+    
+    document.getElementById('checkoutBtn').addEventListener('click', handleCheckout);
+    document.getElementById('resetBtn').addEventListener('click', resetBags);
+}
+
+function handleDragOver(e) {
+    e.preventDefault();
+    if (state.draggingProduct === null) return;
+    
+    const cell = e.target.closest('.grid-cell');
+    if (!cell) return;
+    
+    const bagId = parseInt(cell.dataset.bagId);
+    const x = parseInt(cell.dataset.x);
+    const y = parseInt(cell.dataset.y);
+    const product = state.products[state.draggingProduct];
+    const shape = getRotatedShape(product.type.shape, product.rotation);
+    
+    clearHoverStates();
+    const canPlace = checkCanPlace(bagId, x, y, shape, product.type.weight);
+    
+    highlightCells(bagId, x, y, shape, canPlace ? 'hover-valid' : 'hover-invalid');
+}
+
+function handleDragLeave(e) {
+    clearHoverStates();
+}
+
+function handleDrop(e) {
+    e.preventDefault();
+    if (state.draggingProduct === null) return;
+    
+    const cell = e.target.closest('.grid-cell');
+    if (!cell) return;
+    
+    const bagId = parseInt(cell.dataset.bagId);
+    const x = parseInt(cell.dataset.x);
+    const y = parseInt(cell.dataset.y);
+    const product = state.products[state.draggingProduct];
+    const shape = getRotatedShape(product.type.shape, product.rotation);
+    
+    if (checkCanPlace(bagId, x, y, shape, product.type.weight)) {
+        placeProduct(bagId, x, y, product, shape);
+        product.used = true;
+        renderProducts();
+        updateUI();
+    }
+    
+    clearHoverStates();
+}
+
+function checkCanPlace(bagId, startX, startY, shape, weight) {
+    const bag = state.bags[bagId];
+    
+    if (bag.weight + weight > CONFIG.BAG_WEIGHT_MAX) return false;
+    
+    for (let y = 0; y < shape.length; y++) {
+        for (let x = 0; x < shape[y].length; x++) {
+            if (shape[y][x]) {
+                const gridX = startX + x;
+                const gridY = startY + y;
+                if (gridX >= CONFIG.BAG_GRID_SIZE || gridY >= CONFIG.BAG_GRID_SIZE) return false;
+                if (bag.grid[gridY][gridX] !== null) return false;
+            }
+        }
+    }
+    return true;
+}
+
+function placeProduct(bagId, startX, startY, product, shape) {
+    const bag = state.bags[bagId];
+    const cells = [];
+    
+    for (let y = 0; y < shape.length; y++) {
+        for (let x = 0; x < shape[y].length; x++) {
+            if (shape[y][x]) {
+                const gridX = startX + x;
+                const gridY = startY + y;
+                bag.grid[gridY][gridX] = product.instanceId;
+                cells.push({ x: gridX, y: gridY });
+            }
+        }
+    }
+    
+    bag.weight += product.type.weight;
+    bag.products.push({
+        instanceId: product.instanceId,
+        product: product,
+        cells: cells,
+        shape: shape,
+        startX: startX,
+        startY: startY
+    });
+    
+    renderBagProducts(bagId);
+}
+
+function renderBagProducts(bagId) {
+    const bag = state.bags[bagId];
+    const grid = document.querySelector(`.bag-grid[data-bag-id="${bagId}"]`);
+    
+    grid.querySelectorAll('.placed-product').forEach(el => el.remove());
+    
+    bag.products.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'placed-product';
+        div.dataset.instanceId = item.instanceId;
+        div.dataset.bagId = bagId;
+        div.style.background = item.product.color;
+        
+        // Calculate bounding box
+        const minX = Math.min(...item.cells.map(c => c.x));
+        const maxX = Math.max(...item.cells.map(c => c.x));
+        const minY = Math.min(...item.cells.map(c => c.y));
+        const maxY = Math.max(...item.cells.map(c => c.y));
+        
+        const cellWidth = 100 / CONFIG.BAG_GRID_SIZE;
+        const cellHeight = 100 / CONFIG.BAG_GRID_SIZE;
+        
+        div.style.left = `${minX * cellWidth}%`;
+        div.style.top = `${minY * cellHeight}%`;
+        div.style.width = `${(maxX - minX + 1) * cellWidth}%`;
+        div.style.height = `${(maxY - minY + 1) * cellHeight}%`;
+        
+        // ONE large emoji centered over ALL cells
+        const area = item.cells.length;
+        div.innerHTML = `<span class="placed-emoji" style="font-size: ${2 + area * 0.5}rem;">${item.product.type.emoji}</span>`;
+        
+        grid.appendChild(div);
+    });
+}
+
+function handleBagRightClick(e) {
+    e.preventDefault();
+    const product = e.target.closest('.placed-product');
+    if (!product) return;
+    
+    const bagId = parseInt(product.dataset.bagId);
+    const instanceId = product.dataset.instanceId;
+    removeProductFromBag(bagId, instanceId);
+}
+
+function removeProductFromBag(bagId, instanceId) {
+    const bag = state.bags[bagId];
+    const itemIdx = bag.products.findIndex(p => p.instanceId === instanceId);
+    if (itemIdx === -1) return;
+    
+    const item = bag.products[itemIdx];
+    
+    // Clear grid cells
+    item.cells.forEach(cell => {
+        bag.grid[cell.y][cell.x] = null;
+    });
+    
+    // Restore product weight
+    bag.weight -= item.product.type.weight;
+    
+    // Remove from bag
+    bag.products.splice(itemIdx, 1);
+    
+    // Mark product as unused again
+    const productIdx = state.products.findIndex(p => p.instanceId === instanceId);
+    if (productIdx !== -1) {
+        state.products[productIdx].used = false;
+    }
+    
+    renderBagProducts(bagId);
+    renderProducts();
+    updateUI();
+}
+
+function resetBags() {
+    state.bags.forEach(bag => {
+        bag.products.forEach(item => {
+            const productIdx = state.products.findIndex(p => p.instanceId === item.instanceId);
+            if (productIdx !== -1) {
+                state.products[productIdx].used = false;
+            }
+        });
+        bag.weight = 0;
+        bag.grid = Array(CONFIG.BAG_GRID_SIZE).fill(null).map(() => 
+            Array(CONFIG.BAG_GRID_SIZE).fill(null)
+        );
+        bag.products = [];
+        renderBagProducts(bag.id);
+    });
+    renderProducts();
+    updateUI();
+}
+
+function handleCheckout() {
+    const totalWeight = state.bags.reduce((sum, bag) => sum + bag.weight, 0);
+    const efficiency = totalWeight / state.totalCapacity;
+    const pointsEarned = Math.floor(efficiency * 100);
+    
+    state.points += pointsEarned;
+    state.clientsServed++;
+    
+    showToast(`¡Cliente cobrado! +${pointsEarned} puntos (${Math.round(efficiency * 100)}% eficiencia)`);
+    
+    resetBags();
+    newCustomer();
+}
+
+function clearHoverStates() {
+    document.querySelectorAll('.grid-cell').forEach(cell => {
+        cell.classList.remove('hover-valid', 'hover-invalid');
+    });
+}
+
+function highlightCells(bagId, startX, startY, shape, className) {
+    for (let y = 0; y < shape.length; y++) {
+        for (let x = 0; x < shape[y].length; x++) {
+            if (shape[y][x]) {
+                const gridX = startX + x;
+                const gridY = startY + y;
+                if (gridX < CONFIG.BAG_GRID_SIZE && gridY < CONFIG.BAG_GRID_SIZE) {
+                    const cell = document.querySelector(
+                        `.grid-cell[data-bag-id="${bagId}"][data-x="${gridX}"][data-y="${gridY}"]`
+                    );
+                    if (cell) cell.classList.add(className);
+                }
+            }
+        }
+    }
+}
+
+function updateUI() {
+    const totalWeight = state.bags.reduce((sum, bag) => sum + bag.weight, 0);
+    const totalPercent = (totalWeight / state.totalCapacity) * 100;
+    
+    document.getElementById('clientsCount').textContent = state.clientsServed;
+    document.getElementById('pointsCount').textContent = state.points;
+    document.getElementById('totalWeight').textContent = `${totalWeight}kg`;
+    document.getElementById('totalWeightText').textContent = `${totalWeight}kg / ${state.totalCapacity}kg`;
+    document.getElementById('totalPercent').textContent = `${Math.round(totalPercent)}%`;
+    
+    const totalProgress = document.getElementById('totalProgress');
+    totalProgress.style.width = `${Math.min(totalPercent, 100)}%`;
+    totalProgress.className = 'progress-fill';
+    if (totalPercent >= 100) totalProgress.classList.add('danger');
+    else if (totalPercent >= 80) totalProgress.classList.add('warning');
+    
+    state.bags.forEach(bag => {
+        const percent = (bag.weight / CONFIG.BAG_WEIGHT_MAX) * 100;
+        document.getElementById(`bagWeight${bag.id}`).textContent = `${bag.weight}kg / ${CONFIG.BAG_WEIGHT_MAX}kg`;
+        document.getElementById(`bagPercent${bag.id}`).textContent = `${Math.round(percent)}%`;
+        const progress = document.getElementById(`bagProgress${bag.id}`);
+        progress.style.width = `${Math.min(percent, 100)}%`;
+        progress.className = 'progress-fill';
+        if (percent >= 100) progress.classList.add('danger');
+        else if (percent >= 80) progress.classList.add('warning');
+    });
+    
+    const allPlaced = state.products.every(p => p.used);
+    const canCheckout = totalPercent >= 80 && allPlaced;
+    document.getElementById('checkoutBtn').disabled = !canCheckout;
+}
+
+function showToast(message) {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+// Start game
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+/**
+ * variables.css
+ * ==============
+ * VARIABLES CSS - Colores y tema global
+ * 
+ * Si quieres cambiar el tema del juego, modifica AQUÍ
+ */
+
+:root {
+    /* Colores de fondo */
+    --bg: #1a1a1a;
+    --panel: #222222;
+    --panel-2: #2a2a2a;
+
+    /* Colores de texto */
+    --text: #e8e8e8;
+    --text-dim: #a0a0a0;
+
+    /* Colores de acción */
+    --accent: #4ade80;
+    --warning: #facc15;
+    --danger: #f87171;
+
+    /* Bordes y grid */
+    --border: #3a3a3a;
+    --grid-line: rgba(255, 255, 255, 0.08);
+
+    /* Sombra */
+    --shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}

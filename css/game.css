@@ -1,0 +1,280 @@
+/**
+ * game.css
+ * ========
+ * ESTILOS ESPECÍFICOS DEL JUEGO
+ * 
+ * Productos, bolsas, grid, drag-and-drop
+ */
+
+/* PRODUCTOS DISPONIBLES */
+.products-panel {
+    display: flex;
+    flex-direction: column;
+}
+
+.hint {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    text-align: center;
+    margin-bottom: 16px;
+    line-height: 1.4;
+}
+
+.products-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.product-card {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px;
+    cursor: grab;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.product-card:hover:not(.disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    border-color: var(--accent);
+}
+
+.product-card.dragging {
+    opacity: 0.4;
+    cursor: grabbing;
+}
+
+.product-card.disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.product-card.selected {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--accent);
+}
+
+.product-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.product-emoji {
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+.product-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.product-name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.product-weight {
+    font-size: 0.75rem;
+    color: var(--text-dim);
+}
+
+/* MINI GRID (forma del producto) */
+.mini-grid {
+    display: grid;
+    gap: 2px;
+    background: var(--bg);
+    padding: 6px;
+    border-radius: 6px;
+    width: fit-content;
+    margin: 0 auto;
+}
+
+.mini-cell {
+    width: 12px;
+    height: 12px;
+    background: var(--border);
+    border-radius: 2px;
+}
+
+.mini-cell.active {
+    background: var(--accent);
+}
+
+/* BOLSAS */
+.bags-container {
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+}
+
+.bag-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.bag {
+    position: relative;
+    width: 320px;
+    height: 420px;
+    background: var(--panel-2);
+    border-radius: 16px;
+    border: 2px solid var(--border);
+    overflow: hidden;
+}
+
+.bag-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.bag-grid {
+    position: absolute;
+    inset: 20px 20px 60px 20px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(4, 1fr);
+    gap: 0;
+    border: 1px solid var(--grid-line);
+    z-index: 1;
+}
+
+.grid-cell {
+    border-right: 1px solid var(--grid-line);
+    border-bottom: 1px solid var(--grid-line);
+    position: relative;
+    transition: background 0.15s;
+}
+
+.grid-cell:nth-child(4n) {
+    border-right: none;
+}
+
+.grid-cell:nth-child(n+13) {
+    border-bottom: none;
+}
+
+.grid-cell.hover-valid {
+    background: rgba(74, 222, 128, 0.2);
+}
+
+.grid-cell.hover-invalid {
+    background: rgba(248, 113, 113, 0.3);
+}
+
+/* PRODUCTOS COLOCADOS */
+.placed-product {
+    position: absolute;
+    pointer-events: auto;
+    z-index: 5;
+    cursor: context-menu;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.2s;
+}
+
+.placed-product:hover {
+    opacity: 0.85;
+}
+
+.placed-emoji {
+    font-size: 3rem;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+    pointer-events: none;
+}
+
+/* DRAG PREVIEW */
+.drag-preview {
+    position: fixed;
+    pointer-events: none;
+    z-index: 9999;
+    opacity: 0.9;
+    transform: translate(-50%, -50%);
+    transition: none;
+}
+
+.drag-shape {
+    display: grid;
+    gap: 2px;
+    padding: 8px;
+    background: var(--panel);
+    border: 2px solid var(--accent);
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+}
+
+.drag-cell {
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+}
+
+.drag-cell.active {
+    background: var(--accent);
+}
+
+/* CARGA DE BOLSA */
+.bag-load {
+    width: 100%;
+}
+
+.bag-load-bar {
+    height: 8px;
+}
+
+/* RESPONSIVE */
+@media (max-width: 1200px) {
+    .bags-container {
+        order: -1;
+    }
+}
+
+@media (max-width: 768px) {
+    .bag {
+        width: 280px;
+        height: 380px;
+    }
+
+    .products-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .bags-container {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .stats-bar {
+        gap: 8px;
+    }
+
+    .stat {
+        min-width: 100px;
+        padding: 8px 12px;
+    }
+}
+
+.total-load {
+    width: 100%;
+    max-width: 600px;
+    margin: 16px auto 0;
+}

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BagRunner - Puzzle de Empacar Bolsas</title>
+
+    <!-- CSS MODULARIZADO -->
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/game.css">
+</head>
+<body>
+    <header>
+        <h1>🛍️ Corredor de Bolsa</h1>
+        <div class="stats-bar">
+            <div class="stat">
+                <span class="stat-label">Clientes</span>
+                <span class="stat-value" id="clientsCount">0</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Puntos</span>
+                <span class="stat-value" id="pointsCount">0</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Carga Total</span>
+                <span class="stat-value" id="totalWeight">0kg</span>
+            </div>
+        </div>
+        <div class="total-load">
+            <div class="load-label">
+                <span>Carga total: <strong id="totalWeightText">0kg / 12kg</strong></span>
+                <span id="totalPercent">0%</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="totalProgress"></div>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- PANEL IZQUIERDO: Productos disponibles -->
+        <div class="panel products-panel">
+            <h2>🛒 Compra del cliente</h2>
+            <p class="hint">Arrastra para embolsar · R o click derecho para rotar</p>
+            <div class="products-grid" id="productsGrid"></div>
+            <div class="actions">
+                <button id="newClientBtn" class="secondary">Nuevo cliente</button>
+                <button id="checkoutBtn" disabled>Cobrar al cliente</button>
+            </div>
+        </div>
+
+        <!-- PANEL CENTRAL: Bolsas -->
+        <div class="bags-container" id="bagsContainer"></div>
+
+        <!-- PANEL DERECHO: Acciones -->
+        <div class="panel">
+            <h2>⚙️ Acciones</h2>
+            <div class="actions">
+                <button id="resetBtn" class="secondary">Reiniciar bolsas</button>
+            </div>
+            <div style="margin-top: 20px; font-size: 0.85rem; color: var(--text-dim); line-height: 1.6;">
+                <p><strong>Objetivo:</strong> Coloca todos los productos en las bolsas sin superar el peso máximo.</p>
+                <p style="margin-top: 8px;"><strong>Controles:</strong><br>
+                • Arrastra productos a las bolsas<br>
+                • Tecla R: rotar producto seleccionado<br>
+                • Click derecho en producto: rotar<br>
+                • Click derecho en bolsa: quitar producto<br>
+                • Botón "Cobrar": cuando uses ≥80% capacidad</p>
+            </div>
+        </div>
+    </main>
+
+    <div class="toast" id="toast"></div>
+
+    <!-- SCRIPTS MODULARIZADOS (en orden) -->
+    <!-- 1. Configuración -->
+    <script src="js/config.js"></script>
+    <!-- 2. Definición de productos -->
+    <script src="js/products.js"></script>
+    <!-- 3. Estado del juego -->
+    <script src="js/state.js"></script>
+    <!-- 4. Lógica del juego -->
+    <script src="js/game-logic.js"></script>
+    <!-- 5. Renderización (UI) -->
+    <script src="js/ui.js"></script>
+    <!-- 6. Event listeners (Input) -->
+    <script src="js/input.js"></script>
+    <!-- 7. Orquestación principal -->
+    <script src="js/main.js"></script>
+</body>
+</html>

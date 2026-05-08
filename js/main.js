@@ -20,8 +20,9 @@ function init() {
     createBags();
     generateNewCustomer();
 
-    console.log('🎨 Renderizando UI...');
-    updateUI();
+   console.log('🎨 Renderizando UI...');
+renderBags();
+updateUI();
 
     console.log('⌨️ Configurando event listeners...');
     setupEventListeners();

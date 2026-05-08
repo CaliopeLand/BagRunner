@@ -76,6 +76,83 @@ function handleDragEnd(e) {
     clearCellHighlights();
     document.removeEventListener('dragover', handleGlobalDragOver);
 }
+/**
+ * TOUCH: inicio de arrastre
+ */
+function handleTouchStart(e, idx) {
+    e.preventDefault();
+    const state = getState();
+    if (state.products[idx].used) return;
+
+    selectProduct(idx);
+    setState({ draggingProduct: idx });
+
+    const product = state.products[idx];
+    const preview = createDragPreview(product);
+    setState({ dragPreview: preview });
+
+    const touch = e.touches[0];
+    updateDragPreviewPosition(preview, touch.clientX - 40, touch.clientY - 40);
+}
+
+/**
+ * TOUCH: mover
+ */
+function handleTouchMove(e) {
+    const state = getState();
+    if (state.draggingProduct === null ||!state.dragPreview) return;
+
+    e.preventDefault();
+    const touch = e.touches[0];
+    updateDragPreviewPosition(state.dragPreview, touch.clientX - 40, touch.clientY - 40);
+
+    // Detectar sobre qué celda estamos
+    const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+    clearCellHighlights();
+
+    if (elementBelow && elementBelow.classList.contains('grid-cell')) {
+        const bagId = parseInt(elementBelow.dataset.bagId);
+        const x = parseInt(elementBelow.dataset.x);
+        const y = parseInt(elementBelow.dataset.y);
+        const product = state.products[state.draggingProduct];
+        const shape = getRotatedShape(product.type, product.rotation);
+
+        const cells = getCellsForPlacement(x, y, shape);
+        const isValid = canPlaceProduct(bagId, x, y, shape);
+        highlightCells(bagId, cells, isValid);
+    }
+}
+
+/**
+ * TOUCH: soltar
+ */
+function handleTouchEnd(e) {
+    const state = getState();
+    if (state.draggingProduct === null) return;
+
+    e.preventDefault();
+    const touch = e.changedTouches[0];
+    const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+
+    clearCellHighlights();
+    removeDragPreview(state.dragPreview);
+
+    if (elementBelow && elementBelow.classList.contains('grid-cell')) {
+        const bagId = parseInt(elementBelow.dataset.bagId);
+        const x = parseInt(elementBelow.dataset.x);
+        const y = parseInt(elementBelow.dataset.y);
+        const productIdx = state.draggingProduct;
+        const product = state.products[productIdx];
+        const shape = getRotatedShape(product.type, product.rotation);
+
+        if (canPlaceProduct(bagId, x, y, shape)) {
+            placeProductInBag(productIdx, bagId, x, y, shape);
+            updateUI();
+        }
+    }
+
+    setState({ draggingProduct: null, dragPreview: null, selectedProduct: null });
+}
 
 /**
  * FUNCIÓN: Movimiento del mouse durante arrastre (global)

@@ -278,3 +278,10 @@
     max-width: 600px;
     margin: 16px auto 0;
 }
+
+/* === MÓVIL: evitar scroll mientras arrastras === */
+.product-card,.bag-grid,.drag-preview {
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+}

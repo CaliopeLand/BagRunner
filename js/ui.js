@@ -18,6 +18,36 @@ function updateUI() {
     updateButtons();
 }
 
+function renderBags() {
+    const state = getState();
+    const container = document.getElementById('bagsContainer');
+    container.innerHTML = '';
+    state.bags.forEach(bag => {
+        const bagEl = document.createElement('div');
+        bagEl.className = 'bag';
+        bagEl.innerHTML = `
+            <div class="bag-header">
+                <span class="bag-title">Bolsa ${bag.id + 1}</span>
+                <div class="bag-stats">
+                    <span id="bagWeight${bag.id}">0kg / ${CONFIG.BAG_WEIGHT_MAX}kg</span>
+                    <span id="bagPercent${bag.id}">0%</span>
+                </div>
+                <div class="bag-progress">
+                    <div class="bag-progress-fill" id="bagProgress${bag.id}"></div>
+                </div>
+            </div>
+            <div class="bag-grid" data-bag-id="${bag.id}">
+                ${Array(CONFIG.BAG_GRID_SIZE).fill(0).map((_, y) => 
+                    Array(CONFIG.BAG_GRID_SIZE).fill(0).map((_, x) => 
+                        `<div class="grid-cell" data-x="${x}" data-y="${y}" data-bag-id="${bag.id}"></div>`
+                    ).join('')
+                ).join('')}
+            </div>
+        `;
+        container.appendChild(bagEl);
+    });
+}
+
 /**
  * FUNCIÓN: Actualizar estadísticas (puntos, clientes, carga total)
  */

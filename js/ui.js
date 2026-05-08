@@ -144,6 +144,22 @@ function updateBag(bagId) {
 }
 
 /**
+ * FUNCIÓN: Calcular el centroide (centro real) de un producto
+ * Útil para posicionar el emoji correctamente en formas irregulares (como L)
+ */
+function calculateProductCentroid(cells) {
+    if (cells.length === 0) return { x: 0, y: 0 };
+    
+    const totalX = cells.reduce((sum, cell) => sum + cell.x, 0);
+    const totalY = cells.reduce((sum, cell) => sum + cell.y, 0);
+    
+    return {
+        x: totalX / cells.length,
+        y: totalY / cells.length
+    };
+}
+
+/**
  * FUNCIÓN: Renderizar productos dentro de una bolsa
  */
 function renderBagProducts(bagId) {
@@ -160,7 +176,7 @@ function renderBagProducts(bagId) {
         div.dataset.bagId = bagId;
         div.style.background = item.product.color;
 
-        // Calcular bounding box
+        // Calcular bounding box SOLO con las celdas ocupadas
         const minX = Math.min(...item.cells.map(c => c.x));
         const maxX = Math.max(...item.cells.map(c => c.x));
         const minY = Math.min(...item.cells.map(c => c.y));
@@ -169,14 +185,31 @@ function renderBagProducts(bagId) {
         const cellWidth = 100 / CONFIG.BAG_GRID_SIZE;
         const cellHeight = 100 / CONFIG.BAG_GRID_SIZE;
 
+        // Posición y tamaño del bounding box
         div.style.left = `${minX * cellWidth}%`;
         div.style.top = `${minY * cellHeight}%`;
         div.style.width = `${(maxX - minX + 1) * cellWidth}%`;
         div.style.height = `${(maxY - minY + 1) * cellHeight}%`;
 
-        // Emoji centrado
+        // Calcular centroide para posicionar el emoji correctamente
+        const centroid = calculateProductCentroid(item.cells);
+        
+        // Calcular el offset del centroide respecto al bounding box (en porcentaje)
+        const centerOffsetX = (centroid.x - minX + 0.5) * cellWidth;
+        const centerOffsetY = (centroid.y - minY + 0.5) * cellHeight;
+
+        // Crear elemento para el emoji posicionado en el centroide real
+        const emoji = document.createElement('span');
+        emoji.className = 'placed-emoji';
         const area = item.cells.length;
-        div.innerHTML = `<span class="placed-emoji" style="font-size: ${2 + area * 0.5}rem;">${item.product.type.emoji}</span>`;
+        emoji.style.fontSize = (2 + area * 0.5) + 'rem';
+        emoji.style.position = 'absolute';
+        emoji.style.left = centerOffsetX + '%';
+        emoji.style.top = centerOffsetY + '%';
+        emoji.style.transform = 'translate(-50%, -50%)';
+        emoji.textContent = item.product.type.emoji;
+
+        div.appendChild(emoji);
 
         div.addEventListener('contextmenu', (e) => {
             e.preventDefault();
